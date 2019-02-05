@@ -302,12 +302,15 @@ module.exports = function (Y/* :any */) {
               }
               answer.os = yield* this.getOperations(m.stateSet)
               conn.send(sender, answer)
-              if (this.forwardToSyncingClients) {
+              if (conn.forwardToSyncingClients) {
                 conn.syncingClients.push(sender)
                 setTimeout(function () {
-                  conn.syncingClients = conn.syncingClients.filter(function (cli) {
-                    return cli !== sender
-                  })
+                  // keep the list of syncing clients on 'master' role so update messages can be properly forwarded
+                  if (conn.role === 'slave') {
+                    conn.syncingClients = conn.syncingClients.filter(function (cli) {
+                      return cli !== sender
+                    })  
+                  }
                   conn.send(sender, {
                     type: 'sync done'
                   })
